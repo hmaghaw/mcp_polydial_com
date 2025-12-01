@@ -1,0 +1,11 @@
+# Ignore virtual environments
+.venv
+app/.venv
+
+# Common Python cache
+__pycache__/
+*.pyc
+
+# Local config & cache
+.env
+*.log

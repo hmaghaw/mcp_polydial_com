@@ -1,0 +1,16 @@
+services:
+  debian-root:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: debian-root-container
+    tty: true  # Keeps the container running
+    stdin_open: true  # Keeps STDIN open
+    volumes:
+      - ./app:/app
+    ports:
+      - "8765:8765"   # MCP WebSocket server
+      - "6274:6274"   # MCP Inspector web UI (optional)
+      - "7000:7000"   # Internal proxy (used by the inspector to communicate with the MCP server)
+    #command: [ "/bin/bash", "-c", "tail -f /dev/null" ]  # Keeps container running
+    command: [ "uv", "run", "--with", "mcp", "main.py" ]
