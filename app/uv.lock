@@ -272,7 +272,7 @@ cli = [
 ]
 
 [[package]]
-name = "mcp-minimal"
+name = "mcp-polydial"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [

@@ -1,14 +1,11 @@
 [project]
-name = "mcp-minimal"
+name = "mcp_polydial"
 version = "0.1.0"
 description = "Minimal MCP server with no 3rd-party dependencies"
 requires-python = ">=3.11,<3.13"
 dependencies = [
     "mcp[cli]>=1.2.0"
 ]
-
-[project.scripts]
-mcp-minimal = "mcp_minimal.server:main"
 
 [build-system]
 requires = ["hatchling"]

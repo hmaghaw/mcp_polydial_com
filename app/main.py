@@ -25,7 +25,7 @@ def multiply(a: int, b: int) -> int:
 @mcp.tool()
 def greet_customer(customer_first_name: str) -> str:
     """Greet customer with his name"""
-    return f"Hi {customer_first_name}"
+    return f"Hi {customer_first_name}, How are you?"
 
 # Add a dynamic greeting resource
 @mcp.resource("greeting://{name}")
