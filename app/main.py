@@ -1,42 +1,101 @@
 """
 FastMCP quickstart example.
 
+This server demonstrates how to expose MCP tools and prompts for restaurant
+order handling and call session management. It includes utilities to
+initialize calls, manage customers, create and validate orders, and handle
+greetings.
+
 Run from the repository root:
     uv run examples/snippets/servers/fastmcp_quickstart.py
 """
 
 from mcp.server.fastmcp import FastMCP
 from restaurants_tools import restaurant_tools
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List, Optional
 
+
+# ==========================================================
+# 🧩 Data Models
+# ==========================================================
+
 class Modifier(BaseModel):
-    is_active: bool
+    """
+    Represents a modifier applied to an item (e.g., extra cheese, no onions).
+
+    Attributes:
+        is_active (bool): Whether the modifier is active.
+        modifier_group_id (int): The group to which the modifier belongs.
+        modifier_id (int): Unique ID of the modifier.
+        name (str): Display name of the modifier.
+        price_delta (float): Price difference added by this modifier.
+        quantity (int): Quantity of this modifier applied.
+    """
     modifier_group_id: int
     modifier_id: int
     name: str
     price_delta: float
     quantity: int
+    is_active: bool
+
 
 class Item(BaseModel):
-    base_price: float
+    """
+    Represents an item in a customer's order.
+
+    Attributes:
+        base_price (float): Base price of the item.
+        item_id (int): Unique ID of the item.
+        name (str): Name of the item.
+        note (Optional[str]): Optional note or customization.
+        options (List[dict]): List of selected options or configurations.
+        modifiers (List[Modifier]): List of applied modifiers.
+        price (float): Final calculated price for this item.
+        quantity (int): Quantity of the item ordered.
+    """
+
     item_id: int
     name: str
-    note: Optional[str] = ""
-    options: List[dict]
-    modifiers: List[Modifier]
-    price: float
+    base_price: float
     quantity: int
+    note: Optional[str]
+    modifiers: List[Modifier]
+    options: List[dict]  = Field(default_factory=list, description="List of selected options or configurations")
+
+
 
 class Order(BaseModel):
+    """
+    Represents an entire order for a restaurant.
+
+    Attributes:
+        language_code (str): Language code (e.g., 'en', 'ar').
+        business_id (int): Unique business identifier.
+        customer_id (int): Unique customer identifier.
+        business_phone (str): Business phone number.
+        customer_phone (str): Customer phone number.
+        items (List[Item]): List of ordered items.
+    """
+    call_sid: str
     language_code: str
-    business_id: int
-    customer_id: int
     business_phone: str
     customer_phone: str
     items: List[Item]
 
+
 class CallInit(BaseModel):
+    """
+    Represents the initialization of a phone call session.
+
+    Attributes:
+        call_sid (str): Unique session identifier for the call.
+        customer_id (str): Customer's unique identifier.
+        customer_name (str): Full name of the customer.
+        business_id (str): Business's unique identifier.
+        business_name (str): Name of the business or restaurant.
+        language (str): Preferred communication language for the call.
+    """
     call_sid: str
     customer_id: str
     customer_name: str
@@ -44,13 +103,35 @@ class CallInit(BaseModel):
     business_name: str
     language: str
 
-# Create an MCP server
+
+# ==========================================================
+# ⚙️ MCP Server Setup
+# ==========================================================
+
+# Create an MCP server instance
 mcp = FastMCP("Demo", json_response=True, host="0.0.0.0", port=7000)
 
-@mcp.tool()
-def Initiate_call( business_phone: str, customer_phone: str, call_sid: str) -> CallInit:
 
-    """Initiate the call and retrieve the CallInit structure containing: customer_name, customerid and business_id"""
+# ==========================================================
+# 📞 Call and Customer Tools
+# ==========================================================
+
+@mcp.tool()
+def Initiate_call(business_phone: str, customer_phone: str, call_sid: str) -> CallInit:
+    """
+    Initiate the call and retrieve the CallInit structure.
+
+    This tool initializes the session context for a phone call, linking
+    the customer and business entities.
+
+    Args:
+        business_phone (str): The restaurant's phone number.
+        customer_phone (str): The customer's phone number.
+        call_sid (str): Unique call session ID (e.g., from Twilio).
+
+    Returns:
+        CallInit: Object containing call and participant details.
+    """
     result = CallInit(
         call_sid=call_sid,
         customer_id="33",
@@ -61,45 +142,113 @@ def Initiate_call( business_phone: str, customer_phone: str, call_sid: str) -> C
     )
     return result
 
+
 @mcp.tool()
 def update_customer(customer_id, first_name: str, last_name: str):
-    """Update customer name and details."""
+    """
+    Update the customer's name and details.
+
+    Args:
+        customer_id (str): Unique customer identifier.
+        first_name (str): Customer's first name.
+        last_name (str): Customer's last name.
+    """
     return restaurant_tools.update_customer(customer_id, first_name, last_name)
+
 
 @mcp.tool()
 def update_customer_language(customer_id, language: str):
-    """Update customer's preferred language."""
+    """
+    Update the customer's preferred language.
+
+    Args:
+        customer_id (str): Unique customer identifier.
+        language (str): New language code (e.g., 'en', 'ar').
+    """
     return restaurant_tools.update_customer_language(customer_id, language)
+
+
+# ==========================================================
+# 🧾 Order Management Tools
+# ==========================================================
 
 @mcp.tool()
 def create_order(order: Order):
-    """Create a restaurant order."""
+    """
+    Create a new restaurant order.
+
+    Args:
+        order (Order): Structured order data including items and metadata.
+    """
     return restaurant_tools.create_order(order)
 
+
 @mcp.tool()
-def validate_order(order: Order):
-    """Validate order items and calculate totals."""
-    # This is a simplified version - you might want to implement more robust validation
+def validate_order(order: Order) -> str:
+    """
+    Validate order items and calculate totals.
+
+    Checks for proper format and calls the restaurant tool for validation.
+
+    Args:
+        order (Order): The order data structure to validate.
+
+    Returns:
+        Validation results or error message if invalid.
+    """
     if not isinstance(order, dict) or 'items' not in order:
         return "Error: Invalid order format. Expected a dictionary with an 'items' key."
+    else:
+        order_dict = order.copy()
+        if 'customer_id' not in order_dict:
+            order_dict['customer_id'] = 33
+            order_dict['business_id'] = 97
+        order = Order(**order_dict)
+
     return restaurant_tools.validate_order(order)
+
 
 @mcp.tool()
 def hangup_call() -> str:
-    """End call politely."""
+    """
+    End the call gracefully with a polite closing message.
+
+    Returns:
+        str: Confirmation that the call ended.
+    """
     return "Call ended gracefully"
 
-# Add a dynamic greeting resource
+
+# ==========================================================
+# 🌐 Resources and Prompts
+# ==========================================================
+
 @mcp.resource("greeting://{name}")
 def get_greeting(name: str) -> str:
-    """Get a personalized greeting"""
+    """
+    Retrieve a personalized greeting message.
+
+    Args:
+        name (str): The name to include in the greeting.
+
+    Returns:
+        str: Personalized greeting text.
+    """
     return f"Hello, {name}!"
 
 
-# Add a prompt
 @mcp.prompt()
 def greet_user(name: str, style: str = "friendly") -> str:
-    """Generate a greeting prompt"""
+    """
+    Generate a greeting prompt message.
+
+    Args:
+        name (str): Person's name to greet.
+        style (str): Greeting style ('friendly', 'formal', or 'casual').
+
+    Returns:
+        str: Natural language instruction for the model to generate a greeting.
+    """
     styles = {
         "friendly": "Please write a warm, friendly greeting",
         "formal": "Please write a formal, professional greeting",
@@ -109,9 +258,17 @@ def greet_user(name: str, style: str = "friendly") -> str:
     return f"{styles.get(style, styles['friendly'])} for someone named {name}."
 
 
-# Run with streamable HTTP transport
+# ==========================================================
+# 🚀 Server Entry Point
+# ==========================================================
+
 if __name__ == "__main__":
-    # Allow both transports
+    """
+    Entry point for running the MCP server.
+
+    The server can operate in multiple transport modes.
+    Currently using 'streamable-http' for testing via MCP Inspector.
+    """
     import sys
-    #mcp.run(transport="stdio")
+    # mcp.run(transport="stdio")
     mcp.run(transport="streamable-http")
