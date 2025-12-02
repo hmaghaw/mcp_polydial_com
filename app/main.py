@@ -35,8 +35,46 @@ class Order(BaseModel):
     business_phone: str
     customer_phone: str
     items: List[Item]
+
+class CallInit(BaseModel):
+    call_sid: str
+    customer_id: str
+    customer_name: str
+    business_id: str
+    business_name: str
+    language: str
+
 # Create an MCP server
 mcp = FastMCP("Demo", json_response=True, host="0.0.0.0", port=7000)
+
+@mcp.tool()
+def Initiate_call( business_phone: str, customer_phone: str, call_sid: str) -> CallInit:
+
+    """Initiate the call and retrieve the CallInit structure containing: customer_name, customerid and business_id"""
+    result = CallInit(
+        call_sid=call_sid,
+        customer_id="33",
+        customer_name="Mamdouh",
+        business_id="97",
+        business_name="Kaware3",
+        language="en"
+    )
+    return result
+
+@mcp.tool()
+def update_customer(customer_id, first_name: str, last_name: str):
+    """Update customer name and details."""
+    return restaurant_tools.update_customer(customer_id, first_name, last_name)
+
+@mcp.tool()
+def update_customer_language(customer_id, language: str):
+    """Update customer's preferred language."""
+    return restaurant_tools.update_customer_language(customer_id, language)
+
+@mcp.tool()
+def create_order(order: Order):
+    """Create a restaurant order."""
+    return restaurant_tools.create_order(order)
 
 @mcp.tool()
 def validate_order(order: Order):
@@ -46,21 +84,10 @@ def validate_order(order: Order):
         return "Error: Invalid order format. Expected a dictionary with an 'items' key."
     return restaurant_tools.validate_order(order)
 
-# Add an addition tool
 @mcp.tool()
-def add(a: int, b: int) -> int:
-    """Add two numbers"""
-    return a + b
-
-@mcp.tool()
-def multiply(a: int, b: int) -> int:
-    """Multiply two numbers"""
-    return a * b
-
-@mcp.tool()
-def greet_customer(customer_first_name: str) -> str:
-    """Greet customer with his name"""
-    return f"Hi {customer_first_name}, How are you?"
+def hangup_call() -> str:
+    """End call politely."""
+    return "Call ended gracefully"
 
 # Add a dynamic greeting resource
 @mcp.resource("greeting://{name}")

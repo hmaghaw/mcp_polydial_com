@@ -16,5 +16,6 @@ services:
     #command: [ "uv", "run", "--with", "mcp", "main.py" ]
     command: >
       sh -c ". .venv/bin/activate &&
+               uv sync
                python create_env_file.py production &&
                uv run --with mcp main.py"

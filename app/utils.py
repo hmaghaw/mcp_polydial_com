@@ -32,7 +32,6 @@ def generate_jwt_token(validity=8640):
                 load_dotenv(env_path)
 
         SECRET_KEY = os.getenv("JWT_SECRET_KEY")
-        print("JWT_SECRET_KEY:", SECRET_KEY)
         if not SECRET_KEY:
             raise ValueError("JWT_SECRET_KEY is not set in environment variables")
             
