@@ -173,14 +173,60 @@ def update_customer_language(customer_id, language: str):
 # ==========================================================
 
 @mcp.tool()
-def create_order(order: Order):
+def create_order(order: Order) -> dict:
     """
     Create a new restaurant order.
 
+    This tool receives a structured order object from the AI assistant or an external system,
+    ensures that the required identifiers and data fields are present, and then forwards
+    the validated order to the underlying `restaurant_tools.create_order()` function
+    for database persistence or further processing.
+
+    Behavior:
+        - Converts the input `Order` object (Pydantic model) to a dictionary for compatibility.
+        - Hardcodes `customer_id` and `business_id` values for demonstration purposes.
+          In this example, all orders are attributed to:
+            • customer_id = 33  →  "Mamdouh"
+            • business_id = 97  →  "Kaware3"
+        - Iterates through all items in the order to ensure that each contains
+          an `options` field. If missing, it automatically adds an empty list.
+        - Forwards the normalized dictionary to the core restaurant order handler.
+
     Args:
-        order (Order): Structured order data including items and metadata.
+        order (Order):
+            A validated Pydantic `Order` model containing the following attributes:
+            - language_code (str): Language of the order (e.g., "en", "ar").
+            - business_id (int): Business ID (will be overridden).
+            - customer_id (int): Customer ID (will be overridden).
+            - business_phone (str): The restaurant’s phone number.
+            - customer_phone (str): The customer’s phone number.
+            - items (List[Item]): List of ordered items, each with pricing, modifiers, and notes.
+
+    Returns:
+        Any:
+            The response returned by `restaurant_tools.create_order(order_dict)`, which may include
+            a confirmation message, order identifier, or success indicator depending on implementation.
+
+    Notes:
+        - In a production deployment, `customer_id` and `business_id` should be dynamically resolved
+          via the `Initiate_call` session context, not hardcoded.
+        - This function currently acts as a preprocessor to guarantee
+          order data integrity before persistence or downstream processing.
     """
-    return restaurant_tools.create_order(order)
+
+    order_dict = order.dict() if hasattr(order, 'dict') else dict(order)
+
+    # Hardcode customer_id and business_id
+    order_dict['customer_id'] = 33  # Always hardcode to 33 for Mamdouh
+    order_dict['business_id'] = 97  # Hardcode business_id for Kaware3
+
+    # Ensure all items have required fields
+    if 'items' in order_dict:
+        for item in order_dict['items']:
+            if 'options' not in item:
+                item['options'] = []  # Add empty options list if missing
+
+    return restaurant_tools.create_order(order_dict)
 
 
 @mcp.tool()
@@ -208,12 +254,6 @@ def validate_order(order: Order) -> dict:
         for item in order_dict['items']:
             if 'options' not in item:
                 item['options'] = []  # Add empty options list if missing
-
-    # # Create a new Order object with hardcoded values
-    # try:
-    #     validated_order = Order(**order_dict)
-    # except Exception as e:
-    #     return f"Error creating order object: {str(e)}"
 
     # Call restaurant tool validation
     return restaurant_tools.validate_order(order_dict)

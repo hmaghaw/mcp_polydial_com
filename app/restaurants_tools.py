@@ -18,15 +18,12 @@ def log_execution_time(func):
 
 class RestaurantTools:
     def __init__(self):
-        if not os.getenv("ENVIRONMENT"):
-            env_path = Path(__file__).resolve() / ".env"
-            if env_path.exists():
-                load_dotenv(env_path)
+        env_path = Path(__file__).resolve() / ".env"
+        if env_path.exists():
+            load_dotenv(env_path)
 
-        if os.getenv("ENVIRONMENT") == "development":
-            self.base_url = os.getenv("API_BASE_URL", "http://localhost:5000")
-        else:
-            self.base_url = "http://api:5000"
+        self.base_url = os.getenv("API_BASE_URL", "https://api.polydial.com")
+
         auth_token = utils.generate_jwt_token()
         self.headers = {"Content-Type": "application/json"}
         if auth_token:
@@ -82,7 +79,7 @@ class RestaurantTools:
         return {"response":"An error occurred while updating customer information"}
 
     @log_execution_time
-    def create_order(self, order: dict, **kwargs):
+    def create_order(self, order: dict, **kwargs) -> dict:
         """
         Process a restaurant order.
 
