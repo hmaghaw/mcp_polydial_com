@@ -13,4 +13,8 @@ services:
       - "6274:6274"   # MCP Inspector web UI (optional)
       - "7000:7000"   # Internal proxy (used by the inspector to communicate with the MCP server)
     #command: [ "/bin/bash", "-c", "tail -f /dev/null" ]  # Keeps container running
-    command: [ "uv", "run", "--with", "mcp", "main.py" ]
+    #command: [ "uv", "run", "--with", "mcp", "main.py" ]
+    command: >
+      sh -c ". .venv/bin/activate &&
+               python create_env_file.py production &&
+               uv run --with mcp main.py"

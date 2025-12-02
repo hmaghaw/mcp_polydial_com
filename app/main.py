@@ -6,10 +6,45 @@ Run from the repository root:
 """
 
 from mcp.server.fastmcp import FastMCP
+from restaurants_tools import restaurant_tools
+from pydantic import BaseModel
+from typing import List, Optional
 
+class Modifier(BaseModel):
+    is_active: bool
+    modifier_group_id: int
+    modifier_id: int
+    name: str
+    price_delta: float
+    quantity: int
+
+class Item(BaseModel):
+    base_price: float
+    item_id: int
+    name: str
+    note: Optional[str] = ""
+    options: List[dict]
+    modifiers: List[Modifier]
+    price: float
+    quantity: int
+
+class Order(BaseModel):
+    language_code: str
+    business_id: int
+    customer_id: int
+    business_phone: str
+    customer_phone: str
+    items: List[Item]
 # Create an MCP server
 mcp = FastMCP("Demo", json_response=True, host="0.0.0.0", port=7000)
 
+@mcp.tool()
+def validate_order(order: Order):
+    """Validate order items and calculate totals."""
+    # This is a simplified version - you might want to implement more robust validation
+    if not isinstance(order, dict) or 'items' not in order:
+        return "Error: Invalid order format. Expected a dictionary with an 'items' key."
+    return restaurant_tools.validate_order(order)
 
 # Add an addition tool
 @mcp.tool()
