@@ -184,7 +184,7 @@ def create_order(order: Order):
 
 
 @mcp.tool()
-def validate_order(order: Order) -> str:
+def validate_order(order: Order) -> dict:
     """
     Validate order items and calculate totals.
 
@@ -196,16 +196,27 @@ def validate_order(order: Order) -> str:
     Returns:
         Validation results or error message if invalid.
     """
-    if not isinstance(order, dict) or 'items' not in order:
-        return "Error: Invalid order format. Expected a dictionary with an 'items' key."
-    else:
-        order_dict = order.copy()
-        if 'customer_id' not in order_dict:
-            order_dict['customer_id'] = 33
-            order_dict['business_id'] = 97
-        order = Order(**order_dict)
+    # Convert Order object to dict and ensure customer_id is hardcoded
+    order_dict = order.dict() if hasattr(order, 'dict') else dict(order)
 
-    return restaurant_tools.validate_order(order)
+    # Hardcode customer_id and business_id
+    order_dict['customer_id'] = 33  # Always hardcode to 33 for Mamdouh
+    order_dict['business_id'] = 97  # Hardcode business_id for Kaware3
+
+    # Ensure all items have required fields
+    if 'items' in order_dict:
+        for item in order_dict['items']:
+            if 'options' not in item:
+                item['options'] = []  # Add empty options list if missing
+
+    # # Create a new Order object with hardcoded values
+    # try:
+    #     validated_order = Order(**order_dict)
+    # except Exception as e:
+    #     return f"Error creating order object: {str(e)}"
+
+    # Call restaurant tool validation
+    return restaurant_tools.validate_order(order_dict)
 
 
 @mcp.tool()

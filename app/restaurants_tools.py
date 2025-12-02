@@ -108,7 +108,7 @@ class RestaurantTools:
         else:
             return {"response":"Order creation Failed"}
 
-    def validate_order(self, order: dict, **kwargs):
+    def validate_order(self, order: dict, **kwargs) ->dict:
         items = order['items']
         language_code = order['language_code']
         item_lines, total, tax, grand_total = self.prepare_invoice_lines(items, language_code, show_prices=False)
