@@ -18,12 +18,11 @@ def log_execution_time(func):
 
 class RestaurantTools:
     def __init__(self):
-        env_path = Path(__file__).resolve() / ".env"
+        env_path = Path(__file__).resolve().parent / ".env"
         if env_path.exists():
             load_dotenv(env_path)
-
-        self.base_url = os.getenv("API_BASE_URL", "https://api.polydial.com")
-
+        self.base_url = os.getenv("API_BASE_URL")
+        self.api_key = os.getenv("OPENAI_API_KEY")
         auth_token = utils.generate_jwt_token()
         self.headers = {"Content-Type": "application/json"}
         if auth_token:
@@ -98,6 +97,8 @@ class RestaurantTools:
         }
         response = requests.post(url, json=payload, headers=self.headers)
         res = response.json()
+        if 'success' in res:
+            return {"response":"Order created successfully"}
         if res['status'] == "success":
             message_body = self.generate_detailed_sms_invoice(res)
             self.send_confirmation_sms(message_body,order['business_phone'],order['customer_phone'])

@@ -117,6 +117,8 @@ def create_env_from_template(secret_data, environment="production", output_file=
             key = key.strip()
             new_val = secret_data.get(key, default_val)
             lines.append(f"{key}={new_val}")
+            if len(default_val.strip())>0:
+                lines.append(line)
         else:
             # Keep comments and blank lines intact
             lines.append(line)
