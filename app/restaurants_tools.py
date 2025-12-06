@@ -101,19 +101,29 @@ class RestaurantTools:
             return {"response":"Order created successfully"}
         if res['status'] == "success":
             message_body = self.generate_detailed_sms_invoice(res)
-            self.send_confirmation_sms(message_body,order['business_phone'],order['customer_phone'])
+            try:
+                self.send_confirmation_sms(message_body,order['business_phone'],order['customer_phone'])
+            except Exception as e:
+                print(order)
+                return {"response":"Order created successfully but SMS failed", "error": str(e)}
             return {"response":"Order created successfully"}
         else:
             return {"response":"Order creation Failed"}
 
-    def validate_order(self, order: dict, **kwargs) ->dict:
+    def validate_order(self, order: dict, **kwargs) -> dict:
         items = order['items']
         language_code = order['language_code']
         item_lines, total, tax, grand_total = self.prepare_invoice_lines(items, language_code, show_prices=False)
-        result = {"order_lines": item_lines, "grand_Total": grand_total}
-        res = json.dumps(result)
-        response = f"list 'order_lines' and show 'grand_Total' value and ask the customer to confirm the order: {res}"
-        return {"response":response}
+
+        # Format items with their modifiers
+        items_text = []
+        for item_line in item_lines:
+            items_text.append(item_line)
+
+        items_list = ", ".join(items_text)
+        response = f"Your order is {items_list} and your total comes to {grand_total}. Do you want to proceed?"
+
+        return {"response": response}
 
     def prepare_invoice_lines(self, items, lang: str = "en", show_prices: bool = True):
         lines = []
