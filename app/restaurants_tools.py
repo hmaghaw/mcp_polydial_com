@@ -105,7 +105,7 @@ class RestaurantTools:
                 self.send_confirmation_sms(message_body,order['business_phone'],order['customer_phone'])
             except Exception as e:
                 print(order)
-                return {"response":"Order created successfully but SMS failed", "error": str(e)}
+                return {"response":"Order created successfully but SMS confirmation failed", "error": str(e)}
             return {"response":"Order created successfully"}
         else:
             return {"response":"Order creation Failed"}
