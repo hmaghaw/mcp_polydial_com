@@ -17,7 +17,6 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
     apt-get install -y nodejs && \
     npm install -g @modelcontextprotocol/inspector@0.15.0
 
-RUN . $HOME/.local/bin/env
 COPY ./app /app
 RUN uv venv --python 3.11 && \
  . .venv/bin/activate && \
