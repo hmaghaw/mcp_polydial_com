@@ -82,7 +82,8 @@ class Order(BaseModel):
     business_phone: str
     customer_phone: str
     items: List[Item]
-
+    business_id: str
+    customer_id: str
 
 class CallInit(BaseModel):
     """
@@ -116,31 +117,31 @@ mcp = FastMCP("Demo", json_response=True, host="0.0.0.0", port=7000)
 # 📞 Call and Customer Tools
 # ==========================================================
 
-@mcp.tool()
-def Initiate_call(business_phone: str, customer_phone: str, call_sid: str) -> CallInit:
-    """
-    Initiate the call and retrieve the CallInit structure.
-
-    This tool initializes the session context for a phone call, linking
-    the customer and business entities.
-
-    Args:
-        business_phone (str): The restaurant's phone number.
-        customer_phone (str): The customer's phone number.
-        call_sid (str): Unique call session ID (e.g., from Twilio).
-
-    Returns:
-        CallInit: Object containing call and participant details.
-    """
-    result = CallInit(
-        call_sid=call_sid,
-        customer_id="33",
-        customer_name="Mamdouh",
-        business_id="97",
-        business_name="Kaware3",
-        language="en"
-    )
-    return result
+# @mcp.tool()
+# def Initiate_call(business_phone: str, customer_phone: str, call_sid: str) -> CallInit:
+#     """
+#     Initiate the call and retrieve the CallInit structure.
+#
+#     This tool initializes the session context for a phone call, linking
+#     the customer and business entities.
+#
+#     Args:
+#         business_phone (str): The restaurant's phone number.
+#         customer_phone (str): The customer's phone number.
+#         call_sid (str): Unique call session ID (e.g., from Twilio).
+#
+#     Returns:
+#         CallInit: Object containing call and participant details.
+#     """
+#     result = CallInit(
+#         call_sid=call_sid,
+#         customer_id="33",
+#         customer_name="Mamdouh",
+#         business_id="97",
+#         business_name="Kaware3",
+#         language="en"
+#     )
+#     return result
 
 
 @mcp.tool()
@@ -217,10 +218,6 @@ def create_order(order: Order) -> dict:
     # Use model_dump() instead of dict()
     order_dict = order.model_dump() if hasattr(order, 'model_dump') else dict(order)
 
-    # Hardcode customer_id and business_id
-    order_dict['customer_id'] = 33
-    order_dict['business_id'] = 97
-
     # Ensure all items have required fields
     if 'items' in order_dict:
         for item in order_dict['items']:
@@ -246,10 +243,6 @@ def validate_order(order: Order) -> dict:
     # Convert Order object to dict and ensure customer_id is hardcoded
     # Use model_dump() instead of dict()
     order_dict = order.model_dump() if hasattr(order, 'model_dump') else dict(order)
-
-    # Hardcode customer_id and business_id
-    order_dict['customer_id'] = 33
-    order_dict['business_id'] = 97
 
     # Ensure all items have required fields
     if 'items' in order_dict:
